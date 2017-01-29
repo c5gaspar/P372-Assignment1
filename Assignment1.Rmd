@@ -1,0 +1,27 @@
+###Assignment 1
+####PSYCH 372
+##### Connor Gaspar (20417636)
+
+```{r Setup}
+library(xlsx); library(ggplot2); library(psych); library(dplyr)
+# Reading raw data
+datS <- read.xlsx("p372 class data assignment 1.xlsx", sheetName="Sheet1", stringsAsFactors=F)
+# Organizing raw data
+datS[c(41, 82),] <- NA # Removing header rows from data
+datS1 <- datS[,1:5]; datS2 <- datS[,6:10]; colnames(datS2) <- colnames(datS1)
+dat <- rbind(datS1, datS2)
+dat <- dat[complete.cases(dat),] # Removing NA rows from data
+# Cleaning raw data
+dat$EntryNo <- gl(34, 5) # Providing individual entry ID's
+dat <- dat[, c(6, 1:5)] # Reordering columns
+dat$Distance <- gsub("'", "", dat$Distance) #Removing apostrophes from data
+dat$Distance <- as.numeric(dat$Distance) # Reclassing Distance column
+dat$Distance <- dat$Distance*10 # Expanding the values to multiples of 10cm
+
+# Reclassing raw data
+dat$Position <- as.factor(dat$Position) 
+levels(dat$Position) <- c("Sitting", "Standing")
+dat$Sex <- as.factor(dat$Sex) 
+levels(dat$Sex) <- c("Women", "Men", "Mixed")
+dat$Angle <- as.numeric(dat$Angle)
+```
