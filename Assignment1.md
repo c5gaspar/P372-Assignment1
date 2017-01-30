@@ -2,7 +2,8 @@
 ####PSYCH 372
 ##### Connor Gaspar (20417636)
 
-```{r Setup, message=FALSE, warning=FALSE}
+
+```r
 library(xlsx); library(ggplot2); library(ggthemes);
 library(psych); library(knitr)
 ## Reading raw data
@@ -35,13 +36,23 @@ distDat <- dat[scores<=3,] # Removal of rows where distance scores is < 3 (4% of
 
 
 
-```{r Plotting}
+
+```r
 ## Plotting distributions
 hist(dat$Distance, breaks = seq(0, 700, 10), col="red",
      main="Pre-outlier exclusion distribution") # Pre-outlier analysis
+```
+
+![plot of chunk Plotting](figure/Plotting-1.png)
+
+```r
 hist(distDat$Distance, breaks = seq(0, 250, 10), col="red",
      main="Post-outlier exclusion distribution") # Post-outlier analysis
+```
 
+![plot of chunk Plotting](figure/Plotting-2.png)
+
+```r
 ## Creating distance plot data #
 distPlotDat1 <- aggregate(Distance ~ Sex+Position, data=distDat, mean)
 distPlotDat1$SD <- aggregate(Distance ~ Sex+Position, data=distDat, sd)[,"Distance"]
@@ -81,7 +92,11 @@ ggplot(data=distPlotDat1, aes(x=Position, y=Distance, fill=Sex))+
         theme(plot.margin=unit(c(.5,.25,.25,.5), "cm"),
               axis.title.y=element_text(margin=margin(0,15,0,0)),
               legend.title=element_blank())
+```
 
+![plot of chunk Plotting](figure/Plotting-3.png)
+
+```r
 # Plotting Distance w.r.t. Sex
 ggplot(data=distPlotDat2, aes(x=Sex, y=Distance, fill=Sex))+
                geom_bar(stat="identity", position=position_dodge(), colour="black",
@@ -99,6 +114,13 @@ ggplot(data=distPlotDat2, aes(x=Sex, y=Distance, fill=Sex))+
                      legend.title=element_blank())
 ```
 
-```{r Output, message=FALSE, warning=FALSE}
+![plot of chunk Plotting](figure/Plotting-4.png)
+
+
+```r
 knit2html("Assignment1.Rmd")
+```
+
+```
+## Error in parse_block(g[-1], g[1], params.src): duplicate label 'Setup'
 ```
