@@ -5,8 +5,8 @@
 
 ```{r Setup, message=FALSE, warning=FALSE}
 set.seed(372)
-library(xlsx); library(ggplot2); library(ggthemes);
-library(psych); library(BayesFactor); library(knitr)
+library(xlsx); library(ggplot2); library(ggthemes); library(psych)
+library(ez); library(BayesFactor); library(knitr)
 ## Reading raw data
 datS <- read.xlsx("p372 class data assignment 1.xlsx", sheetName="Sheet1", stringsAsFactors=F)
 ```
@@ -33,12 +33,12 @@ dat$Position <- as.factor(dat$Position)
 levels(dat$Position) <- c("Sitting", "Standing")
 dat$Sex <- as.factor(dat$Sex) 
 levels(dat$Sex) <- c("Women", "Men", "Mixed")
-dat$Angle <- as.numeric(dat$Angle)
 
 ## Outlier Analysis
 scores <- (dat$Distance-mean(dat$Distance))/sd(dat$Distance) # Calculating z-scores
 distDat <- dat[scores<=3,] # Removal of rows where distance scores is < 3 (4% of data)
-distDat <- distDat[distDat$Angle %in% seq(0, 180, 45),] # Excluding trials where angle was coded incorrectly.
+anglDat <- distDat[distDat$Angle %in% seq(0, 180, 45),] # Excluding trials where angle was coded incorrectly.
+anglDat$Angle <- as.factor(anglDat$Angle)
 ```
 
 
@@ -64,6 +64,10 @@ distPlotDat3 <- aggregate(Distance ~ Position, data=distDat, mean)
 distPlotDat3$SD <- aggregate(Distance ~ Position, data=distDat, sd)[,"Distance"]
 distPlotDat3$n <- aggregate(Distance ~ Position, data=distDat, length)[,"Distance"]
 
+anglPlotDat1 <- aggregate(Distance ~ Angle, data=anglDat, mean)
+anglPlotDat1$SD <- aggregate(Distance ~ Angle, data=anglDat, sd)[,"Distance"]
+anglPlotDat1$n <- aggregate(Distance ~ Angle, data=anglDat, length)[,"Distance"]
+
 # Calculating CI's
 for(i in 1:nrow(distPlotDat1)){
         
@@ -85,6 +89,16 @@ for(i in 1:nrow(distPlotDat3)){
         distPlotDat3[i, "Lower"] <- distPlotDat3[i, "Distance"]-distError3
         distPlotDat3[i, "Upper"] <- distPlotDat3[i, "Distance"]+distError3
 }
+
+for(i in 1:nrow(anglPlotDat1)){
+        
+        anglError <- qnorm(.975)*anglPlotDat1[i, "SD"]/sqrt(anglPlotDat1[i, "n"])
+        anglPlotDat1[i, "Lower"] <- anglPlotDat1[i, "Distance"]-anglError
+        anglPlotDat1[i, "Upper"] <- anglPlotDat1[i, "Distance"]+anglError
+}
+
+anglPlotDat1 <- anglPlotDat1[order(levels(anglPlotDat1$Angle)),]
+
 
 # Plotting Distance w.r.t Position
 ggplot(data=distPlotDat3, aes(x=Position, y=Distance, fill=Position))+
@@ -133,6 +147,21 @@ ggplot(data=distPlotDat1, aes(x=Position, y=Distance, fill=Sex))+
         theme(plot.margin=unit(c(.5,.25,.25,.5), "cm"),
               axis.title.y=element_text(margin=margin(0,15,0,0)),
               legend.title=element_blank())
+
+# Plotting Distance w.r.t. Angle
+ggplot(data=anglPlotDat1, aes(x=Angle, y=Distance, fill=Angle))+
+        geom_bar(stat="identity", position=position_dodge(), colour="black",
+                 size=.2)+
+        geom_errorbar(aes(ymin=Lower, ymax=Upper),
+                      position=position_dodge(.9), width=.2)+
+        scale_y_continuous(breaks=seq(0, 100, 10), limits=c(0, 100),
+                         expand=c(0,0))+
+        labs(x="Angle between Partners", y="Distance from Partner (cm)")+
+        theme_base()+
+        scale_fill_brewer(type="seq", palette="BuPu")+
+        theme(plot.margin=unit(c(.5,.25,.25,.5), "cm"),
+              axis.title.y=element_text(margin=margin(0,15,0,0)),
+              legend.title=element_blank())
 ```
 
 ```{r Quick-Stats, warning=FALSE}
@@ -168,7 +197,10 @@ ttestBF(distDat[distDat$Sex=="Men", "Distance"],
 
 ####
 
-## Omnibus ANOVA (Distance ~ Sex+Position)
+## Two-way ANOVAs 
+
+# Distance ~ Sex*Position
+
 ezANOVA(data=distDat,
         dv=Distance,
         wid=Unique,
@@ -177,6 +209,18 @@ ezANOVA(data=distDat,
 
 anovaBF(Distance ~ Position*Sex, data=distDat, progress=F)
 
+# Distance ~ Position*Angle
+
+ezANOVA(data=anglDat,
+        dv=Distance,
+        wid=Unique,
+        between=.(Position, Angle),
+        detailed=T)
+
+anovaBF(Distance ~ Position*Angle, data=anglDat, progress=F)
+
+# Distance ~ Angle regression
+lm(Distance ~ as.numeric(Angle), data=anglDat)
 ```
 
 ```{r Knitr-Output, message=FALSE, warning=FALSE}
