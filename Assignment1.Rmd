@@ -38,9 +38,10 @@ levels(dat$Sex) <- c("Women", "Men", "Mixed")
 scores <- (dat$Distance-mean(dat$Distance))/sd(dat$Distance) # Calculating z-scores
 distDat <- dat[scores<=3,] # Removal of rows where distance scores is < 3 (4% of data)
 anglDat <- distDat[distDat$Angle %in% seq(0, 180, 45),] # Excluding trials where angle was coded incorrectly.
-anglDat$Angle <- as.factor(anglDat$Angle)
-```
 
+anglDat$Angle <- as.factor(anglDat$Angle)
+anglDat$Angle <- factor(anglDat$Angle, levels=c(0, 45, 90, 135, 180)) #Reordering
+```
 
 
 ```{r Plotting}
@@ -96,8 +97,6 @@ for(i in 1:nrow(anglPlotDat1)){
         anglPlotDat1[i, "Lower"] <- anglPlotDat1[i, "Distance"]-anglError
         anglPlotDat1[i, "Upper"] <- anglPlotDat1[i, "Distance"]+anglError
 }
-
-anglPlotDat1 <- anglPlotDat1[order(levels(anglPlotDat1$Angle)),]
 
 
 # Plotting Distance w.r.t Position
@@ -158,7 +157,7 @@ ggplot(data=anglPlotDat1, aes(x=Angle, y=Distance, fill=Angle))+
                          expand=c(0,0))+
         labs(x="Angle between Partners", y="Distance from Partner (cm)")+
         theme_base()+
-        scale_fill_brewer(type="seq", palette="BuPu")+
+        scale_fill_brewer(type="seq", palette="Greens")+
         theme(plot.margin=unit(c(.5,.25,.25,.5), "cm"),
               axis.title.y=element_text(margin=margin(0,15,0,0)),
               legend.title=element_blank())
@@ -210,7 +209,6 @@ ezANOVA(data=distDat,
 anovaBF(Distance ~ Position*Sex, data=distDat, progress=F)
 
 # Distance ~ Position*Angle
-
 ezANOVA(data=anglDat,
         dv=Distance,
         wid=Unique,
